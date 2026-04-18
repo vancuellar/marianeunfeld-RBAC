@@ -12,6 +12,10 @@ class Settings(BaseSettings):
 
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000"]
 
+    MAIL_USERNAME: str = ""
+    MAIL_PASSWORD: str = ""
+    NOTIFY_EMAIL: str = ""
+
     class Config:
         env_file = ".env"
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 from app.db.database import get_db
@@ -6,16 +6,24 @@ from app.models.booking import Booking
 from app.schemas.booking import BookingCreate, BookingOut, BookingStatusUpdate
 from app.routers.users import get_current_user
 from app.models.user import User, Role
+from app.core.email import send_booking_notification
+from app.core.config import settings
 
 router = APIRouter()
 
 
 @router.post("/", response_model=BookingOut, status_code=201)
-def create_booking(payload: BookingCreate, db: Session = Depends(get_db)):
+async def create_booking(
+    payload: BookingCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     booking = Booking(**payload.model_dump())
     db.add(booking)
     db.commit()
     db.refresh(booking)
+    if settings.MAIL_USERNAME and settings.NOTIFY_EMAIL:
+        background_tasks.add_task(send_booking_notification, booking)
     return booking
 
 
